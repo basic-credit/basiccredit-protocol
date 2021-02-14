@@ -1,0 +1,23 @@
+{
+  "name": "basiccredit-protocol",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/basiccredit/basiccredit-protocol.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/basiccredit/basiccredit-protocol/issues"
+  },
+  "homepage": "https://github.com/basiccredit/basiccredit-protocol#readme",
+  "dependencies": {
+    "@openzeppelin/contracts": "^3.4.0"
+  }
+}
