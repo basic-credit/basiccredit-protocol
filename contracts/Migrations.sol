@@ -10,7 +10,7 @@ contract Migrations {
       msg.sender == owner,
       "This function is restricted to the contract's owner"
     );
-    _;
+    ;
   }
 
   function setCompleted(uint completed) public restricted {
