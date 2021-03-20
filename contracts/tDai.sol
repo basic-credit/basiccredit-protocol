@@ -601,17 +601,17 @@ contract ERC20 is Context, IERC20 {
 
 contract tDai is ERC20 {
 
-	address public Admin;
+    address public Admin;
 
 
-	constructor() public ERC20("tDai","tDai") {
-		Admin = msg.sender;		
-	}
+    constructor() public ERC20("tDai","tDai") {
+        Admin = msg.sender;     
+    }
 
-	function MintToken(address _to, uint _amount) public {
-		require(msg.sender == Admin, "Only Admin can call this function");
-		_mint(_to, _amount);
+    function MintToken(address _to, uint _amount) public {
+        require(msg.sender == Admin, "Only Admin can call this function");
+        _mint(_to, _amount);
 
-	}
+    }
 
 }

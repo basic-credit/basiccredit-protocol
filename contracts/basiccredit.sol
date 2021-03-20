@@ -16,18 +16,18 @@ contract BasicCredit is ReentrancyGuard {
     using Address for address;
 
 
-	string public name = "Basic Credit Protocol"; 
+    string public name = "Basic Credit Protocol"; 
 
-	address public Admin;
+    address public Admin;
 
-	address[] public lenders;  //array addresses of lenders
+    address[] public lenders;  //array addresses of lenders
 
-	mapping(address => mapping(address => uint)) public depositBalance;
-	mapping(address => bool) public hasDeposited; // has deposited ever?
+    mapping(address => mapping(address => uint)) public depositBalance;
+    mapping(address => bool) public hasDeposited; // has deposited ever?
 
-	address[] public borrowers;  //array addresses of borrowers
+    address[] public borrowers;  //array addresses of borrowers
 
-	mapping(address => mapping(address => uint)) public loanAmount;
+    mapping(address => mapping(address => uint)) public loanAmount;
     mapping(address => mapping(address => uint)) public downPayment;
     mapping(address => mapping(address => uint)) public interestRate;
     mapping(address => mapping(address => uint)) public currentPrincipal;
@@ -36,139 +36,139 @@ contract BasicCredit is ReentrancyGuard {
     mapping(address => mapping(address => uint)) public disbursedDate;
     mapping(address => mapping(address => uint)) public nextEMIDate;
 
-	mapping(address => mapping(address => uint)) public creditLimit;
-	mapping(address => bool) public hasBorrowed; // has borrowed ever?
+    mapping(address => mapping(address => uint)) public creditLimit;
+    mapping(address => bool) public hasBorrowed; // has borrowed ever?
 
-	mapping(address => bool) public whitelistedToken; //If a ERC20 token is whitelisted
-
-
-	constructor() {
-
-		Admin = msg.sender;
-
-	}
-
-	function whitelistToken(address _tokenaddress) public {
-
-		require(msg.sender == Admin, "Only Admin can call this function");
-
-		if(_tokenaddress.isContract()) {
-
-			whitelistedToken[_tokenaddress] = true;
-		}
-	}
-
-	function removeWhitelist(address _tokenaddress) public {
-
-		require(msg.sender == Admin, "Only Admin can call this function");
-		require(whitelistedToken[_tokenaddress] == true, "Token not yet whitelisted");
-
-		if(_tokenaddress.isContract()) {
-
-			whitelistedToken[_tokenaddress] = false;
-		}
-	}
+    mapping(address => bool) public whitelistedToken; //If a ERC20 token is whitelisted
 
 
-	//Deposit Tokens - For Lenders
+    constructor() {
 
-	function DepositTokens(address _tokenaddress, uint _amount) public {
+        Admin = msg.sender;
 
+    }
 
-		//require amount greater than 0. Require is a function in solidity.
-		require(_amount > 0, "Amount cannot be 0");
-		require(whitelistedToken[_tokenaddress] == true, "Only deposits of whitelisted tokens are accepted");
+    function whitelistToken(address _tokenaddress) public {
 
-		IERC20(_tokenaddress).safeTransferFrom(msg.sender, address(this), _amount);
+        require(msg.sender == Admin, "Only Admin can call this function");
 
-		//Update deposit balance
+        if(_tokenaddress.isContract()) {
 
-		depositBalance[_tokenaddress][msg.sender] = depositBalance[_tokenaddress][msg.sender].add(_amount);
+            whitelistedToken[_tokenaddress] = true;
+        }
+    }
 
-		//Add user to lenders array if they haven't deposited already
+    function removeWhitelist(address _tokenaddress) public {
 
-		if(!hasDeposited[msg.sender]) {
+        require(msg.sender == Admin, "Only Admin can call this function");
+        require(whitelistedToken[_tokenaddress] == true, "Token not yet whitelisted");
 
-			lenders.push(msg.sender);
-		}
+        if(_tokenaddress.isContract()) {
 
-		hasDeposited[msg.sender] = true;
-
-
-	}
-
-
-
-	//Withdraw Tokens - For Lenders
-
-	function WithdrawTokens(address _tokenaddress, uint _amount) public nonReentrant {
-
-		require(_amount > 0, "Amount cannot be 0");
-		require(whitelistedToken[_tokenaddress] == true, "Not a whitelisted Token");
-
-		uint balance = depositBalance[_tokenaddress][msg.sender];
-
-		require(balance > 0, "No balance to withdraw");
-		require(_amount <= balance, "Deposit is  less than requested Withdraw amount");
-
-		if(balance > 0 && balance >= _amount) {
-
-			IERC20(_tokenaddress).safeTransfer(msg.sender, _amount);
-
-			depositBalance[_tokenaddress][msg.sender] = depositBalance[_tokenaddress][msg.sender].sub(_amount);
-
-		}  
-
-	}
+            whitelistedToken[_tokenaddress] = false;
+        }
+    }
 
 
-	function setCreditLimit(address _tokenaddress, address _borroweraddress, uint _amount) public {
+    //Deposit Tokens - For Lenders
 
-		require(whitelistedToken[_tokenaddress] == true, "Not a whitelisted Token");
-		require(msg.sender == Admin, "Only Admin can call this function");
-		require(_amount > 0, "Amount cannot be 0");
-
-		creditLimit[_tokenaddress][_borroweraddress] = _amount;
-
-	}
+    function DepositTokens(address _tokenaddress, uint _amount) public {
 
 
-	//Borrow Tokens - For Borrowers
+        //require amount greater than 0. Require is a function in solidity.
+        require(_amount > 0, "Amount cannot be 0");
+        require(whitelistedToken[_tokenaddress] == true, "Only deposits of whitelisted tokens are accepted");
 
-	function BorrowTokens(address _tokenaddress, uint _amount) public nonReentrant {
+        IERC20(_tokenaddress).safeTransferFrom(msg.sender, address(this), _amount);
 
-		require(_amount > 0, "Amount cannot be 0");
-		require(whitelistedToken[_tokenaddress] == true, "Only whitelisted tokens can be borrowed");
+        //Update deposit balance
 
-		uint pool_balance = IERC20(_tokenaddress).balanceOf(address(this));
+        depositBalance[_tokenaddress][msg.sender] = depositBalance[_tokenaddress][msg.sender].add(_amount);
 
-		require(pool_balance >= _amount, "Borrowing Suspended temporarily");
+        //Add user to lenders array if they haven't deposited already
 
-		uint limit = creditLimit[_tokenaddress][msg.sender];
+        if(!hasDeposited[msg.sender]) {
 
-		require(limit != 0, "You don't have a Credit Limit");
+            lenders.push(msg.sender);
+        }
 
-		uint bAmount = borrowedAmount[_tokenaddress][msg.sender];
-
-		uint totalCredit = bAmount.add(_amount);
-
-		require(totalCredit <= limit, "Requested amount exceeds your Credit Limit");
+        hasDeposited[msg.sender] = true;
 
 
-		IERC20(_tokenaddress).safeTransfer(msg.sender, _amount);
+    }
 
-		borrowedAmount[_tokenaddress][msg.sender] = borrowedAmount[_tokenaddress][msg.sender].add(_amount);
 
-		if(!hasBorrowed[msg.sender]) {
 
-			borrowers.push(msg.sender);
-		}	
+    //Withdraw Tokens - For Lenders
 
-		//Update borrower status
+    function WithdrawTokens(address _tokenaddress, uint _amount) public nonReentrant {
 
-		hasBorrowed[msg.sender] = true;
+        require(_amount > 0, "Amount cannot be 0");
+        require(whitelistedToken[_tokenaddress] == true, "Not a whitelisted Token");
+
+        uint balance = depositBalance[_tokenaddress][msg.sender];
+
+        require(balance > 0, "No balance to withdraw");
+        require(_amount <= balance, "Deposit is  less than requested Withdraw amount");
+
+        if(balance > 0 && balance >= _amount) {
+
+            IERC20(_tokenaddress).safeTransfer(msg.sender, _amount);
+
+            depositBalance[_tokenaddress][msg.sender] = depositBalance[_tokenaddress][msg.sender].sub(_amount);
+
+        }  
+
+    }
+
+
+    function setCreditLimit(address _tokenaddress, address _borroweraddress, uint _amount) public {
+
+        require(whitelistedToken[_tokenaddress] == true, "Not a whitelisted Token");
+        require(msg.sender == Admin, "Only Admin can call this function");
+        require(_amount > 0, "Amount cannot be 0");
+
+        creditLimit[_tokenaddress][_borroweraddress] = _amount;
+
+    }
+
+
+    //Borrow Tokens - For Borrowers
+
+    function BorrowTokens(address _tokenaddress, uint _amount) public nonReentrant {
+
+        require(_amount > 0, "Amount cannot be 0");
+        require(whitelistedToken[_tokenaddress] == true, "Only whitelisted tokens can be borrowed");
+
+        uint pool_balance = IERC20(_tokenaddress).balanceOf(address(this));
+
+        require(pool_balance >= _amount, "Borrowing Suspended temporarily");
+
+        uint limit = creditLimit[_tokenaddress][msg.sender];
+
+        require(limit != 0, "You don't have a Credit Limit");
+
+        uint bAmount = borrowedAmount[_tokenaddress][msg.sender];
+
+        uint totalCredit = bAmount.add(_amount);
+
+        require(totalCredit <= limit, "Requested amount exceeds your Credit Limit");
+
+
+        IERC20(_tokenaddress).safeTransfer(msg.sender, _amount);
+
+        borrowedAmount[_tokenaddress][msg.sender] = borrowedAmount[_tokenaddress][msg.sender].add(_amount);
+
+        if(!hasBorrowed[msg.sender]) {
+
+            borrowers.push(msg.sender);
+        }   
+
+        //Update borrower status
+
+        hasBorrowed[msg.sender] = true;
  
-	}
+    }
 
 
     function emiCalculator(uint _loanAmount, uint _interestRate, uint _loantenure) internal returns(uint) {
@@ -189,28 +189,28 @@ contract BasicCredit is ReentrancyGuard {
     // }
 
 
-	//Repay Tokens - For Borrowers
+    //Repay Tokens - For Borrowers
 
-	function RepayTokens(address _tokenaddress, uint _amount) public {
-
-
-		//require amount greater than 0. Require is a function in solidity.
-		require(_amount > 0, "Amount cannot be 0");
-		require(whitelistedToken[_tokenaddress] == true, "Not a whitelisted token");
-
-		uint bAmount = borrowedAmount[_tokenaddress][msg.sender];
-
-		require(bAmount <= _amount, "Repayment amount greater than current due");
+    function RepayTokens(address _tokenaddress, uint _amount) public {
 
 
-		//Transfer Dai Tokens
-		IERC20(_tokenaddress).safeTransferFrom(msg.sender, address(this), _amount);
+        //require amount greater than 0. Require is a function in solidity.
+        require(_amount > 0, "Amount cannot be 0");
+        require(whitelistedToken[_tokenaddress] == true, "Not a whitelisted token");
 
-		//Update borrow balance
+        uint bAmount = borrowedAmount[_tokenaddress][msg.sender];
 
-		borrowedAmount[_tokenaddress][msg.sender] = borrowedAmount[_tokenaddress][msg.sender].sub(_amount);
+        require(bAmount <= _amount, "Repayment amount greater than current due");
 
 
-	}
+        //Transfer Dai Tokens
+        IERC20(_tokenaddress).safeTransferFrom(msg.sender, address(this), _amount);
+
+        //Update borrow balance
+
+        borrowedAmount[_tokenaddress][msg.sender] = borrowedAmount[_tokenaddress][msg.sender].sub(_amount);
+
+
+    }
 
 }
