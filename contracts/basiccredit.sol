@@ -180,13 +180,13 @@ contract BasicCredit is ReentrancyGuard {
     }
 
 
-    function AdvancedBorrow(address _tokenAddress, uint _amount, uint _tenure, uint _emiCycle) public {
+    // function AdvancedBorrow(address _tokenAddress, uint _amount, uint _tenure, uint _emiCycle) public {
 
-        require(_amount > 0, "Amount cannot be 0");
-        require(whitelistedToken[_tokenaddress] == true, "Not a whitelisted token");
-        require(_tenure <= 6, "Selected tenure not available")
+    //     require(_amount > 0, "Amount cannot be 0");
+    //     require(whitelistedToken[_tokenaddress] == true, "Not a whitelisted token");
+    //     require(_tenure <= 6, "Selected tenure not available")
      
-    }
+    // }
 
 
 	//Repay Tokens - For Borrowers
